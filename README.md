@@ -1,3 +1,5 @@
+This is an unofficial NeoForge port of [Mod Menu](https://github.com/TerraformersMC/ModMenu).
+
 # Mod Menu
 ![Screenshot of the Mods screen, showing a list of a few mods on the left side below a search bar and filters button, where Mod Menu is selected. On the right side of the screen, it shows more details about the mod, such as authors, a description, links, credits, and a button to configure the mod.](res/screenshot1.jpg)
 
