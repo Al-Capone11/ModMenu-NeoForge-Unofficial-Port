@@ -207,7 +207,7 @@ public class ModListEntry extends ObjectSelectionList.Entry<ModListEntry> {
     public Identifier getIconTexture() {
         if (this.iconLocation == null) {
             this.iconLocation = Identifier.fromNamespaceAndPath(ModMenu.MOD_ID, mod.getId() + "_icon");
-            DynamicTexture icon = mod.getIcon(list.getFabricIconHandler(), 64 * this.client.options.guiScale().get());
+            DynamicTexture icon = mod.getIcon(list.getIconHandler(), 64 * this.client.options.guiScale().get());
             this.client.getTextureManager().register(this.iconLocation, icon);
         }
 

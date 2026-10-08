@@ -1,13 +1,10 @@
 package com.terraformersmc.modmenu.util.mod;
 
 import com.terraformersmc.modmenu.ModMenu;
-import com.terraformersmc.modmenu.TextPlaceholderApiCompat;
 import com.terraformersmc.modmenu.api.UpdateChecker;
 import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
-import com.terraformersmc.modmenu.util.mod.fabric.FabricIconHandler;
-import eu.pb4.placeholders.api.ParserContext;
-import net.fabricmc.loader.api.metadata.ContactInformation;
+import com.terraformersmc.modmenu.util.mod.neoforge.NeoForgeIconHandler;
 import net.minecraft.locale.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,14 +33,12 @@ public interface Mod {
         }
     }
 
-    @NotNull DynamicTexture getIcon(FabricIconHandler iconHandler, int i);
+    @NotNull DynamicTexture getIcon(NeoForgeIconHandler iconHandler, int i);
 
     @NotNull
     default String getSummary() {
         String string = getTranslatedSummary();
-        return ModMenu.TEXT_PLACEHOLDER_COMPAT ?
-                TextPlaceholderApiCompat.PARSER.parseComponent(string, ParserContext.of()).getString() :
-                string;
+        return string;
     }
 
     @NotNull
@@ -72,9 +67,7 @@ public interface Mod {
 
     default Component getFormattedDescription() {
         String string = getTranslatedDescription();
-        return ModMenu.TEXT_PLACEHOLDER_COMPAT ?
-                TextPlaceholderApiCompat.PARSER.parseComponent(string, ParserContext.of()) :
-                Component.literal(string);
+        return Component.literal(string);
     }
 
     @NotNull String getVersion();
@@ -83,7 +76,7 @@ public interface Mod {
 
     @NotNull List<String> getAuthors();
 
-    ContactInformation getContact(String author);
+    Map<String, String> getContact(String author);
 
     /**
      * @return a mapping of contributors to their roles.

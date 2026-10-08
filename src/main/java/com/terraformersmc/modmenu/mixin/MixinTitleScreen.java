@@ -13,7 +13,6 @@ import com.terraformersmc.modmenu.api.ModMenuApi;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.gui.ModsScreen;
 import com.terraformersmc.modmenu.gui.widget.SmallModMenuButtonWidget;
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.Screen;
@@ -69,7 +68,7 @@ public abstract class MixinTitleScreen {
         if (!addModMenuIconWidget.get()) return;
         currentButton.set(currentButton.get()+1);
         Screen screen = (TitleScreen) (Object) this;
-        Screens.getWidgets(screen).add(new SmallModMenuButtonWidget(
+        ((ScreenAccessor) (Object) this).modmenu$addRenderableWidget(new SmallModMenuButtonWidget(
                 this.getHorizontalPosition(currentButton.get(), numberOfButtons, 20),
                 topPos,
                 20,

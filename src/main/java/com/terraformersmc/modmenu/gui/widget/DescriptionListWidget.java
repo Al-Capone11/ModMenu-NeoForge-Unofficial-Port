@@ -4,7 +4,6 @@ import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.gui.ModsScreen;
 import com.terraformersmc.modmenu.util.mod.Mod;
-import net.fabricmc.loader.api.metadata.ContactInformation;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -243,9 +242,9 @@ public class DescriptionListWidget extends AbstractSelectionList<DescriptionList
                             indent = 16;
 
                             for (var line : textRenderer.split(Component.literal(contributor), wrapWidth - 24)) {
-                                ContactInformation contact = mod.getContact(contributor);
-                                if (contact != null && contact.get("email").isPresent()) {
-                                    this.addEntry(new MailableContactEntry(line, contact.get("email").get(), indent));
+                                Map<String, String> contact = mod.getContact(contributor);
+                                if (contact != null && contact.containsKey("email")) {
+                                    this.addEntry(new MailableContactEntry(line, contact.get("email"), indent));
                                 } else {
                                     this.addEntry(new DescriptionEntry(line, indent));
                                 }

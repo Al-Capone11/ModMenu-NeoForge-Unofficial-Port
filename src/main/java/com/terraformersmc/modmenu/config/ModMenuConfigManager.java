@@ -7,7 +7,7 @@ import com.terraformersmc.modmenu.config.option.BooleanConfigOption;
 import com.terraformersmc.modmenu.config.option.ConfigOptionStorage;
 import com.terraformersmc.modmenu.config.option.EnumConfigOption;
 import com.terraformersmc.modmenu.config.option.StringSetConfigOption;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -26,7 +26,7 @@ public class ModMenuConfigManager {
 
     private static void prepareConfigPath() {
         if (path == null) {
-            path = FabricLoader.getInstance().getConfigDir().resolve(ModMenu.MOD_ID + ".json");
+            path = FMLPaths.CONFIGDIR.get().resolve(ModMenu.MOD_ID + ".json");
         }
     }
 

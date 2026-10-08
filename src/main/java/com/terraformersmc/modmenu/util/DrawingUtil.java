@@ -2,8 +2,6 @@ package com.terraformersmc.modmenu.util;
 
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.util.mod.Mod;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.locale.Language;
@@ -16,7 +14,6 @@ import net.minecraft.util.Mth;
 import java.util.List;
 import java.util.Random;
 
-@Environment(EnvType.CLIENT)
 public class DrawingUtil {
     private static final Minecraft CLIENT = Minecraft.getInstance();
 

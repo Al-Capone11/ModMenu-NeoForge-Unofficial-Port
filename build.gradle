@@ -1,39 +1,55 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
+	id 'java-library'
+	id 'net.neoforged.moddev' version '2.0.141'
 }
 
-apply from: 'https://raw.githubusercontent.com/TerraformersMC/GradleScripts/3.2/ferry.gradle'
+version = mod_version
+group = maven_group
+base { archivesName = archive_name }
 
-dependencies {
-	minecraft "com.mojang:minecraft:$project.minecraft_version"
-
-    implementation "net.fabricmc:fabric-loader:$project.loader_version"
-
-	implementation include(fabricApi.module("fabric-api-base", project.fabric_version))
-    implementation include(fabricApi.module("fabric-resource-loader-v1", project.fabric_version))
-    implementation include(fabricApi.module("fabric-screen-api-v1", project.fabric_version))
-    implementation include(fabricApi.module("fabric-key-mapping-api-v1", project.fabric_version))
-    implementation include(fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version))
-
-//    compileOnly include("eu.pb4:placeholder-api:${project.text_placeholder_api_version}")
-    compileOnly("eu.pb4:placeholder-api:${project.text_placeholder_api_version}")
-
-	compileOnly "org.quiltmc:quilt-loader:$project.quilt_loader_version"
-}
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 repositories {
-	maven {
-		name = 'TerraformersMC'
-		url = 'https://maven.terraformersmc.com/'
+	mavenCentral()
+	maven { url = 'https://maven.neoforged.net/releases' }
+}
+
+neoForge {
+	version = neo_version
+
+	runs {
+		client { client() }
 	}
 
-	maven {
-		name = 'Quilt'
-		url = 'https://maven.quiltmc.org/repository/release'
+	mods {
+		modmenu { sourceSet sourceSets.main }
 	}
+}
 
-	maven {
-		name = 'Nucleoid'
-		url = 'https://maven.nucleoid.xyz/'
-	}
+dependencies {
+	compileOnly 'org.jetbrains:annotations:26.0.2'
+}
+
+processResources {
+	def properties = [
+		mod_id: mod_id,
+		mod_name: mod_name,
+		mod_version: mod_version,
+		mod_license: mod_license,
+		mod_authors: mod_authors,
+		mod_description: mod_description,
+		minecraft_version_range: minecraft_version_range,
+		neo_version_range: neo_version_range,
+		loader_version_range: loader_version_range
+	]
+	inputs.properties properties
+	filesMatching('META-INF/neoforge.mods.toml') { expand properties }
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+}
+
+jar {
+	manifest.attributes['MixinConfigs'] = 'mixins.modmenu.json'
 }

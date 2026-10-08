@@ -1,7 +1,7 @@
 package com.terraformersmc.modmenu.util;
 
 import com.terraformersmc.modmenu.ModMenu;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.ModList;
 import net.minecraft.SharedConstants;
 import net.minecraft.util.Util;
 
@@ -33,7 +33,7 @@ public class HttpUtil {
 
     private static String buildUserAgent() {
         String env = ModMenu.DEV_ENVIRONMENT ? "/development" : "";
-        String loader = ModMenu.RUNNING_QUILT ? "quilt" : "fabric";
+        String loader = "neoforge";
 
         var modMenuVersion = getModMenuVersion();
         var minecraftVersion = SharedConstants.getCurrentVersion().name();
@@ -43,11 +43,11 @@ public class HttpUtil {
     }
 
     private static String getModMenuVersion() {
-        var container = FabricLoader.getInstance().getModContainer(ModMenu.MOD_ID);
+        var container = ModList.get().getModContainerById(ModMenu.MOD_ID);
         if (container.isEmpty()) {
             throw new RuntimeException("Unable to find Modmenu's own mod container!");
         }
 
-        return VersionUtil.removeBuildMetadata(container.get().getMetadata().getVersion().getFriendlyString());
+        return VersionUtil.removeBuildMetadata(container.get().getModInfo().getVersion().toString());
     }
 }

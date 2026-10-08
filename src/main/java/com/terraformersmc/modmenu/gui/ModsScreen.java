@@ -12,9 +12,7 @@ import com.terraformersmc.modmenu.util.ModMenuScreenTexts;
 import com.terraformersmc.modmenu.util.TranslationUtil;
 import com.terraformersmc.modmenu.util.mod.Mod;
 import com.terraformersmc.modmenu.util.mod.ModBadgeRenderer;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.ModOrigin;
+import net.neoforged.fml.loading.FMLPaths;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -589,7 +587,7 @@ public class ModsScreen extends Screen {
 
     @Override
     public void onFilesDrop(List<Path> paths) {
-        Path modsDirectory = FabricLoader.getInstance().getGameDir().resolve("mods");
+        Path modsDirectory = FMLPaths.GAMEDIR.get().resolve("mods");
 
         // Filter out none mods
         List<Path> mods = paths.stream().filter(ModsScreen::isValidMod).toList();
@@ -623,30 +621,14 @@ public class ModsScreen extends Screen {
 
     private static boolean isValidMod(Path mod) {
         try (JarFile jarFile = new JarFile(mod.toFile())) {
-            var isFabricMod = jarFile.getEntry("fabric.mod.json") != null;
-            if (!ModMenu.RUNNING_QUILT) {
-                return isFabricMod;
-            } else {
-                return isFabricMod || jarFile.getEntry("quilt.mod.json") != null;
-            }
+            return jarFile.getEntry("META-INF/neoforge.mods.toml") != null;
         } catch (IOException e) {
             return false;
         }
     }
 
     private static Path getModsFolder() {
-        ModContainer container = FabricLoader.getInstance().getModContainer(ModMenu.MOD_ID).orElseThrow();
-
-        while (container.getContainingMod().isPresent()) {
-            container = container.getContainingMod().get();
-        }
-
-        if (container.getOrigin().getKind() == ModOrigin.Kind.PATH) {
-            return container.getOrigin().getPaths().getFirst().getParent();
-        } else {
-            // Fall back on the old behavior
-            return FabricLoader.getInstance().getGameDir().resolve("mods");
-        }
+        return FMLPaths.GAMEDIR.get().resolve("mods");
     }
 
     public boolean getModHasConfigScreen(String modId) {

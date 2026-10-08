@@ -8,7 +8,8 @@
   },
   "client": [
     "MixinPauseScreen",
-    "MixinTitleScreen"
+    "MixinTitleScreen",
+    "ScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

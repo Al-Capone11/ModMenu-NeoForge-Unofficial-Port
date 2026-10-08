@@ -240,7 +240,7 @@ public class UpdateCheckerUtil {
 
     private static @Nullable Map<String, VersionUpdate> getUpdatedVersions(Collection<String> modHashes) {
         String mcVer = SharedConstants.getCurrentVersion().name();
-        List<String> loaders = ModMenu.RUNNING_QUILT ? List.of("fabric", "quilt") : List.of("fabric");
+        List<String> loaders = List.of("neoforge");
         List<UpdateChannel> updateChannels = getUpdateChannels();
 
         String body = ModMenu.GSON_MINIFIED.toJson(new LatestVersionsFromHashesBody(modHashes,

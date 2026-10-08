@@ -9,7 +9,7 @@ import com.terraformersmc.modmenu.gui.widget.entries.ModListEntry;
 import com.terraformersmc.modmenu.gui.widget.entries.ParentEntry;
 import com.terraformersmc.modmenu.util.mod.Mod;
 import com.terraformersmc.modmenu.util.mod.ModSearch;
-import com.terraformersmc.modmenu.util.mod.fabric.FabricIconHandler;
+import com.terraformersmc.modmenu.util.mod.neoforge.NeoForgeIconHandler;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.*;
@@ -31,7 +31,7 @@ public class ModListWidget extends ObjectSelectionList<ModListEntry> implements 
     private @Nullable List<Mod> mods = null;
     private final Set<Mod> addedMods = new HashSet<>();
     private @Nullable String selectedModId = null;
-    private final FabricIconHandler iconHandler = new FabricIconHandler();
+    private final NeoForgeIconHandler iconHandler = new NeoForgeIconHandler();
     private @Nullable Double restoreScrollY = null;
 
     public ModListWidget(
@@ -124,7 +124,7 @@ public class ModListWidget extends ObjectSelectionList<ModListEntry> implements 
     }
 
     @Override
-    protected void clearEntries() {
+    public void clearEntries() {
         this.setSelected(null);
         addedMods.clear();
         super.clearEntries();
@@ -372,7 +372,7 @@ public class ModListWidget extends ObjectSelectionList<ModListEntry> implements 
         iconHandler.close();
     }
 
-    public FabricIconHandler getFabricIconHandler() {
+    public NeoForgeIconHandler getIconHandler() {
         return iconHandler;
     }
 }

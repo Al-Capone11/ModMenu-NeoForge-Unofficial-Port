@@ -11,19 +11,20 @@ import com.terraformersmc.modmenu.api.ModMenuApi;
 import com.terraformersmc.modmenu.api.UpdateChecker;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.config.ModMenuConfigManager;
-import com.terraformersmc.modmenu.event.ModMenuEventHandler;
+import com.terraformersmc.modmenu.gui.ModMenuOptionsScreen;
 import com.terraformersmc.modmenu.util.EnumToLowerCaseJsonConverter;
 import com.terraformersmc.modmenu.util.ModMenuScreenTexts;
 import com.terraformersmc.modmenu.util.NullScreenFactory;
 import com.terraformersmc.modmenu.util.UpdateCheckerUtil;
 import com.terraformersmc.modmenu.util.mod.Mod;
-import com.terraformersmc.modmenu.util.mod.fabric.FabricDummyParentMod;
-import com.terraformersmc.modmenu.util.mod.fabric.FabricMod;
-import com.terraformersmc.modmenu.util.mod.quilt.QuiltMod;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.ModMetadata;
+import com.terraformersmc.modmenu.util.mod.neoforge.NeoForgeMod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -36,7 +37,8 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ModMenu implements ClientModInitializer {
+@net.neoforged.fml.common.Mod(value = ModMenu.MOD_ID, dist = Dist.CLIENT)
+public class ModMenu {
     public static final String MOD_ID = "modmenu";
     public static final String GITHUB_REF = "TerraformersMC/ModMenu";
     public static final Logger LOGGER = LoggerFactory.getLogger("Mod Menu");
@@ -53,92 +55,48 @@ public class ModMenu implements ClientModInitializer {
     public static final Map<String, Mod> ROOT_MODS = new ConcurrentHashMap<>();
     public static final ListMultimap<Mod, Mod> PARENT_MAP = Multimaps.synchronizedListMultimap(LinkedListMultimap.create());
 
-    private static final Map<String, ConfigScreenFactory<?>> configScreenFactories = new ConcurrentHashMap<>();
-    private static final List<ModMenuApi> apiImplementations = new ArrayList<>();
+    private static final Map<String, IConfigScreenFactory> configScreenFactories = new ConcurrentHashMap<>();
 
     private static int cachedDisplayedModCount = -1;
-    public static final boolean RUNNING_QUILT = FabricLoader.getInstance().isModLoaded("quilt_loader");
-    public static final boolean DEV_ENVIRONMENT = FabricLoader.getInstance().isDevelopmentEnvironment();
-    public static final boolean TEXT_PLACEHOLDER_COMPAT = FabricLoader.getInstance().isModLoaded("placeholder-api");
+    public static final boolean RUNNING_QUILT = false;
+    public static final boolean DEV_ENVIRONMENT = Boolean.getBoolean("modmenu.development");
+    public static final boolean TEXT_PLACEHOLDER_COMPAT = false;
 
     public static boolean hasConfigScreen(String modId) {
         return getConfigScreenFactory(modId) != null;
     }
 
     public static @Nullable Screen getConfigScreen(String modId, Screen parent) {
-        ConfigScreenFactory<?> factory = getConfigScreenFactory(modId);
+        IConfigScreenFactory factory = getConfigScreenFactory(modId);
         if (factory != null) {
-            return factory.create(parent);
+            return factory.createScreen(ModList.get().getModContainerById(modId).orElseThrow(), parent);
         } else {
             return null;
         }
     }
 
-    private static @Nullable ConfigScreenFactory<?> getConfigScreenFactory(String modId) {
+    private static @Nullable IConfigScreenFactory getConfigScreenFactory(String modId) {
         if (ModMenuConfig.HIDDEN_CONFIGS.getValue().contains(modId)) {
             return null;
         }
 
-        for (ModMenuApi api : apiImplementations) {
-            var factoryProviders = api.getProvidedConfigScreenFactories();
-            if (!factoryProviders.isEmpty()) {
-                factoryProviders.forEach(configScreenFactories::putIfAbsent);
-            }
-        }
-
-        return configScreenFactories.get(modId);
+        return configScreenFactories.computeIfAbsent(modId, id -> ModList.get().getModContainerById(id)
+                .flatMap(container -> IConfigScreenFactory.getForMod(container.getModInfo())).orElse(null));
     }
 
-    @Override
-    public void onInitializeClient() {
+    public ModMenu(IEventBus modBus, ModContainer self) {
         ModMenuConfigManager.initializeConfig();
-        Set<String> modpackMods = new HashSet<>();
-        Map<String, UpdateChecker> updateCheckers = new HashMap<>();
-        Map<String, UpdateChecker> providedUpdateCheckers = new HashMap<>();
-
-        // Ignore deprecations, they're from Quilt Loader being in the dev env
-        //noinspection deprecation
-        FabricLoader.getInstance().getEntrypointContainers("modmenu", ModMenuApi.class).forEach(entrypoint -> {
-            //noinspection deprecation
-            ModMetadata metadata = entrypoint.getProvider().getMetadata();
-            String modId = metadata.getId();
-            try {
-                ModMenuApi api = entrypoint.getEntrypoint();
-                ConfigScreenFactory<?> factory = api.getModConfigScreenFactory();
-                if (!(factory instanceof NullScreenFactory<?>)) {
-                    configScreenFactories.put(modId, factory);
-                }
-                apiImplementations.add(api);
-                updateCheckers.put(modId, api.getUpdateChecker());
-                providedUpdateCheckers.putAll(api.getProvidedUpdateCheckers());
-                api.attachModpackBadges(modpackMods::add);
-            } catch (Throwable e) {
-                LOGGER.error("Mod {} provides a broken implementation of ModMenuApi", modId, e);
-            }
-        });
-
-        // Fill mods map
-        //noinspection deprecation
-        for (ModContainer modContainer : FabricLoader.getInstance().getAllMods()) {
-            Mod mod;
-            if (RUNNING_QUILT) {
-                mod = new QuiltMod(modContainer, modpackMods);
-            } else {
-                mod = new FabricMod(modContainer, modpackMods);
-            }
-
-            var updateChecker = updateCheckers.get(mod.getId());
-            if (updateChecker == null) {
-                updateChecker = providedUpdateCheckers.get(mod.getId());
-            }
-
+        modBus.addListener(com.terraformersmc.modmenu.event.ModMenuEventHandler::registerKeys);
+        configScreenFactories.put(MOD_ID, (container, parent) -> new ModMenuOptionsScreen(parent));
+        configScreenFactories.put("minecraft", (container, parent) -> new OptionsScreen(parent,
+                Minecraft.getInstance().options, Minecraft.getInstance().level != null));
+        for (ModContainer modContainer : ModList.get().getSortedMods()) {
+            Mod mod = new NeoForgeMod(modContainer);
             MODS.put(mod.getId(), mod);
-            mod.setUpdateChecker(updateChecker);
+            IConfigScreenFactory.getForMod(modContainer.getModInfo()).ifPresent(factory -> configScreenFactories.put(mod.getId(), factory));
         }
 
         checkForUpdates();
-
-        Map<String, Mod> dummyParents = new HashMap<>();
 
         // Initialize parent map
         HashSet<String> modParentSet = new HashSet<>();
@@ -152,13 +110,7 @@ public class ModMenu implements ClientModInitializer {
             Mod parent;
             modParentSet.clear();
             while (true) {
-                parent = MODS.getOrDefault(parentId, dummyParents.get(parentId));
-                if (parent == null) {
-                    if (mod instanceof FabricMod) {
-                        parent = new FabricDummyParentMod((FabricMod) mod, parentId);
-                        dummyParents.put(parentId, parent);
-                    }
-                }
+                parent = MODS.get(parentId);
 
                 parentId = parent != null ? parent.getParent() : null;
                 if (parentId == null) {
@@ -183,8 +135,6 @@ public class ModMenu implements ClientModInitializer {
             PARENT_MAP.put(parent, mod);
         }
 
-        MODS.putAll(dummyParents);
-        ModMenuEventHandler.register();
     }
 
     public static void clearModCountCache() {
